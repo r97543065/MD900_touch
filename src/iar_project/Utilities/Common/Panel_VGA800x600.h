@@ -1,0 +1,63 @@
+#ifndef __Panel_VGA800x600_H
+#define __Panel_VGA800x600_H
+
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
+#define Panel_HS_Width		128
+#define Panel_VS_Height	4
+
+#define Panel_HBP			88
+#define Panel_Active_Width	800	
+#define Panel_HFP			40
+
+#define Panel_VBP			23
+#define Panel_Active_Height	600
+#define Panel_VFP			1
+
+#define Panel_HTotal			Panel_HS_Width+Panel_HBP+Panel_Active_Width+Panel_HFP-1
+#define Panel_Vtotal			Panel_VS_Height+Panel_VBP+Panel_Active_Height+Panel_VFP-1
+
+/* PLLSAI_VCO Input = HSE_VALUE/PLL_M = 1 Mhz */
+/* PLLSAI_VCO Output = PLLSAI_VCO Input * PLLSAI_N = 400 Mhz */
+/* PLLLCDCLK = PLLSAI_VCO Output/PLLSAI_R = 400/5 = 80 Mhz */
+/* LTDC clock frequency = PLLLCDCLK / RCC_PLLSAIDivR = 80/2 = 40 Mhz */
+
+#define Panel_PLLSAI_N		320 // 400	// 192~432
+#define Panel_PLLSAI_R		4// 5	// 2~7
+#define Panel_PLLSAI_DivR	2	// 2¡B4¡B8¡B16
+
+#define Panel_HS_ActivePolarity	 1	// 0:low 1:high
+#define Panel_VS_ActivePolarity	 1	// 0:low 1:high
+#define Panel_DE_ActivePolarity	 0	// 0:low 1:high
+#define Panel_DotClock_Invert	 1	// 0:normal 1:intert
+
+#define DotClcok				Panel_PLLSAI_N*1000000/Panel_PLLSAI_R/Panel_PLLSAI_DivR	//Hz
+#define FrameRate			DotClcok/Panel_HTotal/Panel_Vtotal	//Hz
+
+#define Layer1_Active_Width		800
+#define Layer1_Active_Height	600
+
+#define Layer2_Active_Width	800
+#define Layer2_Active_Height	600
+
+#define Layer1FrameS			((uint32_t)0xD0000000)
+
+#define Layer1FrameE			Layer1FrameS+((uint32_t)Layer1_Active_Width * Layer1_Active_Height * 4) - 1
+#define Layer1BFrameS			Layer1FrameE + 1
+#define Layer1BFrameE			Layer1BFrameS+((uint32_t)Layer1_Active_Width * Layer1_Active_Height * 4) - 1
+
+#define Layer2FrameS			Layer1BFrameE + 1
+#define Layer2FrameE			Layer2FrameS+((uint32_t)Layer2_Active_Width * Layer2_Active_Height * 4) -1
+#define Layer2BFrameS			Layer2FrameE + 1
+#define Layer2BFrameE			Layer2BFrameS+((uint32_t)Layer2_Active_Width * Layer2_Active_Height * 4) -1
+
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /*__Panel_VGA800x600_H */
+

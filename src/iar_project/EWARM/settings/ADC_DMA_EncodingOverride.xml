@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<userOverrides>
+  <override>
+    <path>C:\STM32F429I-Discovery_FW_V1.0.0\Projects\Peripheral_Examples\ADC_DMA_FTF\main.c</path>
+    <encoding>Big5</encoding>
+  </override>
+  <override>
+    <path>C:\STM32F429I-Discovery_FW_V1.0.0\Projects\Peripheral_Examples\ADC_DMA_FTF\sys_rtc.c</path>
+    <encoding>UTF-8</encoding>
+  </override>
+</userOverrides>
+
+

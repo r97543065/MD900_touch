@@ -124,7 +124,11 @@
   int Ycnt = 0;
   int touch_debounce = 0;
   int touch_debounce_cnt = 0;
+  int touch_data_debounce_cnt = 0;
   int Do_not_touch = 0;
+  int Selected_model_label = 0;
+  bool touched = false;
+  bool data_touched = false;
 int main(void)
 {
   wchar_t str_main[50];
@@ -140,7 +144,7 @@ int main(void)
    RCC_GetClocksFreq(&RCC_Clocks);     
    if (SysTick_Config(SystemCoreClock / 1000)){ while (1);/* Capture error */ }
   
-  /*初始化*/
+  /*初始化*/    
    //LABEL 0.1
    /****開啟電源******/
    
@@ -610,7 +614,7 @@ int main(void)
             Send_usb_data_ecg_values();
             Send_usb_data_temp_values(Get_temp_data_T1(Get_menu_Label_data(Temp1_Menu,Temp1_Source_menu),0), Get_temp_data_T2(Get_menu_Label_data(Temp2_Menu,Temp2_Source_menu)));
              
-            //myTS_Handle = TSC2046_GetTouchData();
+            //myTS_Handle = TSC2046_GetTouchData();//202108
             
             /*swprintf(str_main,20,L"B %3d ,I %3d",GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_4),GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_2));
             show_str2(200,150,str_main);
@@ -680,15 +684,8 @@ int main(void)
       break;
       case MSG_Freq250Hz:
         
-          test_X_buff[3] = test_X_buff[2];
-          test_X_buff[2] = test_X_buff[1];
-          test_X_buff[1] = test_X_buff[0];
-          test_X_buff[0] = (int)TSC2046_GetTouchData().X;
-          test_Y_buff[3] = test_Y_buff[2];  
-          test_Y_buff[2] = test_Y_buff[1];
-          test_Y_buff[1] = test_Y_buff[0];          
-          test_Y_buff[0] = (int)TSC2046_GetTouchData().Y; 
-         
+          test_X_buff[0] = (int)TSC2046_GetTouchData().X;         
+          test_Y_buff[0] = (int)TSC2046_GetTouchData().Y;          
                
       break;
         case MSG_Freq200Hz: 
@@ -709,21 +706,33 @@ int main(void)
           
         case MSG_Freq100Hz:
         receive_uart4_packet(); //temp 
-        if(TSC2046_GetTouchData().isPressed){                               
-          max_det_X = test_X_buff[3];
-          max_det_Y = test_Y_buff[3];          
+        if(TSC2046_GetTouchData().isPressed){     
+          //if(test_X_buff[3]>2000){test_X_buff[3]=0;}
+          max_det_X = test_X_buff[0];
+          max_det_Y = test_Y_buff[0];   
+          
+          swprintf(str_main,20,L"X %6d %4d",max_det_X, max_det_Y);//202108
+          show_str2(400,500,str_main);
         }       
+        //swprintf(str_main,20,L"X %4d",TSC2046_getRaw_Z());
+        //show_str2(400,530,str_main);
         
+              
         switch(StateMachineStatus)
         {  
 
             case ST_MainScreen:
+              
+              
+              
               if(TSC2046_GetTouchData().isPressed==true && max_det_X > 0 && max_det_Y > 0){
+                
+
                   Touch_menu_data(max_det_X, max_det_Y, 0); 
                   Drow_menu_box(Get_menuLabel(),0);
                   last_label = Get_menuLabel();
                   touch_debounce++;                       
-                  if(touch_debounce >= 2){
+                  if(touch_debounce >= 1){
                     touch_debounce = 0;
                     Select_Model_menu(Get_menuLabel(),MSG_UPKeyPress);
                     if(Get_menuLabel() == Time_Menu)
@@ -741,33 +750,89 @@ int main(void)
               break;
             case ST_Menu:
               touch_debounce_cnt++;
-              if(touch_debounce_cnt > 2){
+              if(touch_debounce_cnt > 3){
+                
                 touch_debounce_cnt = 0;
-                if(TSC2046_GetTouchData().isPressed==true && max_det_X > 0 && max_det_Y > 0 ){
-                  touch_debounce_cnt = 0;
-                  if(Touch_Select_Model_Label(Get_menuLabel(),max_det_X,max_det_Y)==1){
-                      StateMachineStatus = ST_MenuChangeValue;
+                if(TSC2046_GetTouchData().isPressed==true && max_det_X > 0 && max_det_Y > 0 && touched == false){
+                  g_no_touched = false;
+                  touched = true;
+                  if(Get_menuLabel() != Alarm_Menu){
+                    g_touch_trigger = true;
+                    if(Touch_Select_Model_Label(Get_menuLabel(),max_det_X,max_det_Y)==1){
+                        StateMachineStatus = ST_MenuChangeValue;
+                          Change_menu_data(StateMachineStatus,Get_menuLabel(),Get_Select_Model_Label(),MSG_UPKeyPress,MsgNum);                  
+                          if(StateMachineStatus!=ST_MenuExit){                    
+                              reset_menu_data(StateMachineStatus,Get_menuLabel(),Get_Select_Model_Label(),MSG_ENTKeyPress,MsgNum);
+                              StateMachineStatus = ST_MenuChangeValueExit;
+                              if(Get_Select_Model_Label()==System_Version_menu){
+                                Change_menu_data(StateMachineStatus,Get_menuLabel(),Get_Select_Model_Label(),MSG_ENTKeyPress,MsgNum);                      
+                              }
+                          }
+                    }
+                    else if(Touch_Select_Model_Label(Get_menuLabel(),max_det_X,max_det_Y)==-1){
+                        StateMachineStatus = ST_MenuChangeValue;
+                        reset_menu_data(StateMachineStatus,Get_menuLabel(),Get_Select_Model_Label(),MSG_ENTKeyPress,MsgNum); 
+                        Do_not_touch = 1;
+                    }
                   }
-                  else if(Touch_Select_Model_Label(Get_menuLabel(),max_det_X,max_det_Y)==-1){
-                      StateMachineStatus = ST_MenuChangeValue;
-                      reset_menu_data(StateMachineStatus,Get_menuLabel(),Get_Select_Model_Label(),MSG_ENTKeyPress,MsgNum); 
-                      Do_not_touch = 1;
-                  }
+                  else{
+                    g_touch_trigger = false;
+                    if(Touch_Select_Model_Label(Get_menuLabel(),max_det_X,max_det_Y)==1){              
+                        StateMachineStatus = ST_MenuChangeValue;
+                        reset_menu_data(StateMachineStatus,Get_menuLabel(),Get_Select_Model_Label(),MSG_ENTKeyPress,MsgNum);
+                        Selected_model_label = Get_Select_Model_Label();
+                    }
+                    else if(Touch_Select_Model_Label(Get_menuLabel(),max_det_X,max_det_Y)==-1){
+                        StateMachineStatus = ST_MenuChangeValue;
+                        Do_not_touch = 1;
+                    }                    
+                  }                  
+                }
+                else if(TSC2046_GetTouchData().isPressed==false){
+                  touched = false;
+                  g_no_touched = true;
+                  //touch_debounce_cnt = 0;
                 }
               }
               break;
             case ST_MenuChangeValue:
-              if(TSC2046_GetTouchData().isPressed==true && max_det_X > 0 && max_det_Y > 0 && Do_not_touch == 0){ 
-                
-                  Change_menu_data(StateMachineStatus,Get_menuLabel(),Get_Select_Model_Label(),MSG_UPKeyPress,MsgNum);
-                  
-                  if(StateMachineStatus!=ST_MenuExit){
-                    StateMachineStatus = ST_MenuChangeValueExit;
-                    if(Get_Select_Model_Label()==System_Version_menu){
-                      Change_menu_data(StateMachineStatus,Get_menuLabel(),Get_Select_Model_Label(),MSG_ENTKeyPress,MsgNum); 
+              touch_data_debounce_cnt++;
+              if(touch_data_debounce_cnt > 3){
+                touch_data_debounce_cnt = 0;
+              if(TSC2046_GetTouchData().isPressed==true && max_det_X > 0 && max_det_Y > 0 && Do_not_touch == 0 && data_touched==false){ 
+                  data_touched=true;
+                  g_no_touched = false;
+                  if(Get_menuLabel() != Alarm_Menu){
+                    /*Change_menu_data(StateMachineStatus,Get_menuLabel(),Get_Select_Model_Label(),MSG_UPKeyPress,MsgNum);                  
+                    if(StateMachineStatus!=ST_MenuExit){                    
+                      reset_menu_data(StateMachineStatus,Get_menuLabel(),Get_Select_Model_Label(),MSG_ENTKeyPress,MsgNum);
+                      StateMachineStatus = ST_MenuChangeValueExit;
+                      if(Get_Select_Model_Label()==System_Version_menu){
+                        Change_menu_data(StateMachineStatus,Get_menuLabel(),Get_Select_Model_Label(),MSG_ENTKeyPress,MsgNum);                      
+                      }
+                    }*/
+                  }
+                  else if(Get_menuLabel() == Alarm_Menu){                                                            
+                      if(Touch_Select_Model_Label(Get_menuLabel(),max_det_X,max_det_Y)==2){
+                        Change_menu_data(StateMachineStatus,Get_menuLabel(),Selected_model_label,MSG_DOWNKeyPress,MsgNum);
+                      }
+                      else if(Touch_Select_Model_Label(Get_menuLabel(),max_det_X,max_det_Y)==3){
+                        Change_menu_data(StateMachineStatus,Get_menuLabel(),Selected_model_label,MSG_UPKeyPress,MsgNum);
+                      }
+                      else if(Touch_Select_Model_Label(Get_menuLabel(),max_det_X,max_det_Y)==1){
+                        if(Get_Select_Model_Label() == Selected_model_label){  
+                          StateMachineStatus = ST_Menu;
+                          reset_menu_data(StateMachineStatus,Get_menuLabel(),Get_Select_Model_Label(),MSG_ENTKeyPress,MsgNum);                          
+                        }
+                      }
                     }
-                  }                  
-              }
+                  }
+                  else if(TSC2046_GetTouchData().isPressed==false){
+                    data_touched=false;
+                    g_no_touched = true;
+                  }
+                }              
+
 
               break;
             case ST_MenuExit:
@@ -786,10 +851,11 @@ int main(void)
                   cleartostartIBP();
                   rest_menu_data=1;
                   SetLineFlag();
-                  havesetlineflag = 0;              
+                  havesetlineflag = 0;  
+                  g_no_touched = true;
               break;                                         
         }
-        max_det_X = -1;max_det_Y = -1;
+        //max_det_X = -1;max_det_Y = -1;//202108
            
        //LABEL 1.2.8 DATA AUTO RUN 
        all_data_autorun();
@@ -1442,17 +1508,30 @@ int main(void)
           {
             case MSG_UPKeyPress:
               //LABEL 1.5.2.1.1 Menu UPKey
-              reset_menu_data(StateMachineStatus,Get_menuLabel(),Get_Select_Model_Label(),MSG_UPKeyPress,MsgNum);
+              g_touch_trigger = false;
               
-              Change_menu_data(StateMachineStatus,Get_menuLabel(),Get_Select_Model_Label(),MSG_UPKeyPress,MsgNum);
-              
+              if(Get_Select_Model_Label()!=Alarm_PLUS_menu && Get_Select_Model_Label()!=Alarm_MINUS_menu){
+                reset_menu_data(StateMachineStatus,Get_menuLabel(),Get_Select_Model_Label(),MSG_UPKeyPress,MsgNum);              
+                Change_menu_data(StateMachineStatus,Get_menuLabel(),Get_Select_Model_Label(),MSG_UPKeyPress,MsgNum);
+                g_no_touched = true;
+              }
+              else{
+                Set_Select_Model_Label(Get_Select_Model_Label()-1);
+              }
             break;
             case MSG_DOWNKeyPress:
              //LABEL 1.5.2.1.2 Menu DOWNKey
-              reset_menu_data(StateMachineStatus,Get_menuLabel(),Get_Select_Model_Label(),MSG_DOWNKeyPress,MsgNum);
+              g_touch_trigger = false;
               
-              Change_menu_data(StateMachineStatus,Get_menuLabel(),Get_Select_Model_Label(),MSG_DOWNKeyPress,MsgNum);
-            
+              if(Get_Select_Model_Label()!=Alarm_PLUS_menu && Get_Select_Model_Label()!=Alarm_MINUS_menu){
+                reset_menu_data(StateMachineStatus,Get_menuLabel(),Get_Select_Model_Label(),MSG_DOWNKeyPress,MsgNum);              
+                Change_menu_data(StateMachineStatus,Get_menuLabel(),Get_Select_Model_Label(),MSG_DOWNKeyPress,MsgNum);
+                g_no_touched = true;
+              }
+              else{
+                Set_Select_Model_Label(Get_Select_Model_Label()-1);
+              }
+
                break;
             case MSG_ENTKeyPress:
              //LABEL 1.5.2.1.3 Menu ENTERKey

@@ -31,7 +31,7 @@ struct  label_function Menu[Menu_End];
 int Menu_Color[Function_Menu_End];
 int tempch=390,tempcl=360;
 float co2ph=6.6,co2pl=3.9;
-
+bool g_touch_trigger = false;
 int old_select=0,sflag=0;
 wchar_t IDstr[ID_MAX+1]=L"";//=L"COMDEK"
 wchar_t oldIDstr[ID_MAX+1];
@@ -70,6 +70,9 @@ wchar_t* Internet_get_ID(void)
 }
 void alarm_menu_default(void)
 {
+  
+  
+  
   Menu[Alarm_Menu].start =Alarm_Start_menu;
   //wcscpy(Menu[Alarm_Menu].Menu_label[Alarm_Start_menu].word,"Alarm Menu");
   Menu[Alarm_Menu].Menu_label[Alarm_Start_menu].data=0;
@@ -624,6 +627,25 @@ void menu_init(void)
 #endif 
   //************Alarm Menu***************/
 #if 1
+  
+  Menu[Alarm_Menu].start =Alarm_PLUS_menu;
+  Menu[Alarm_Menu].Menu_label[Alarm_PLUS_menu].word_label = Alarm_PLUS_menu;
+  Menu[Alarm_Menu].Menu_label[Alarm_PLUS_menu].x=200;
+  Menu[Alarm_Menu].Menu_label[Alarm_PLUS_menu].y=280;
+  Menu[Alarm_Menu].Menu_label[Alarm_PLUS_menu].data=0;
+  Menu[Alarm_Menu].Menu_label[Alarm_PLUS_menu].data_x=200;
+  Menu[Alarm_Menu].Menu_label[Alarm_PLUS_menu].data_y=280;
+  Menu[Alarm_Menu].Menu_label[Alarm_PLUS_menu].select=0;  
+  ////////////////////////////////////////////////
+  Menu[Alarm_Menu].start =Alarm_MINUS_menu;
+  Menu[Alarm_Menu].Menu_label[Alarm_MINUS_menu].word_label = Alarm_MINUS_menu;
+  Menu[Alarm_Menu].Menu_label[Alarm_MINUS_menu].x=110;
+  Menu[Alarm_Menu].Menu_label[Alarm_MINUS_menu].y=280;
+  Menu[Alarm_Menu].Menu_label[Alarm_MINUS_menu].data=0;
+  Menu[Alarm_Menu].Menu_label[Alarm_MINUS_menu].data_x=110;
+  Menu[Alarm_Menu].Menu_label[Alarm_MINUS_menu].data_y=280;
+  Menu[Alarm_Menu].Menu_label[Alarm_MINUS_menu].select=0;
+  
   Menu[Alarm_Menu].start =Alarm_Start_menu;
   //wcscpy(Menu[Alarm_Menu].Menu_label[Alarm_Start_menu].word,"Alarm Menu");
   Menu[Alarm_Menu].Menu_label[Alarm_Start_menu].word_label =Alarm_Start_menu;
@@ -3296,13 +3318,25 @@ void Set_Select_Model_init(int men)
 }
 
 
+
+
 void Drow_label_menu(int sm,int men,int key,unsigned char MsgNum)
 {
-  int x,y;  
+  int x,y; 
+  wchar_t temp_word[10];
    change_color(LCD_COLOR_WHITE,LCD_COLOR_BLUE);
    show_str(Menu[men].Menu_label[Menu[men].start].x,Menu[men].Menu_label[Menu[men].start].y-5,Get_menu_word(Menu[men].Menu_label[Menu[men].start].word_label));  
    change_color(LCD_COLOR_WHITE,LCD_COLOR_BLACK);
    LCD_DrawFullRect_background(165-x_shift,82,629,363);//TODO
+   
+/*  if(men == Alarm_Menu){
+    swprintf(temp_word,10,L"+");
+    show_str(Menu[men].Menu_label[Alarm_PLUS_menu].x,Menu[men].Menu_label[Alarm_PLUS_menu].y,temp_word);
+    swprintf(temp_word,10,L"-");
+    show_str(Menu[men].Menu_label[Alarm_MINUS_menu].x,Menu[men].Menu_label[Alarm_MINUS_menu].y,temp_word);
+    LCD_DrawfatBox(Menu[men].Menu_label[Alarm_PLUS_menu].x-20,Menu[men].Menu_label[Alarm_PLUS_menu].y+1,50,30,LCD_COLOR_WHITE);
+    LCD_DrawfatBox(Menu[men].Menu_label[Alarm_MINUS_menu].x-20,Menu[men].Menu_label[Alarm_MINUS_menu].y+1,50,30,LCD_COLOR_WHITE);
+  }*/
     Get_test_meny=men;
   for(int i=Menu[men].start+1;i<Menu[men].end;i++)
   {
@@ -3425,7 +3459,7 @@ void Change_menu_data(int sm,int men,int label,int key,unsigned char MsgNum)
     }
     LCD_DrawBox(x-4,y-2,width,height,LCD_COLOR_WHITE);    //
     
-    
+    if(g_touch_trigger == false){
         if(Menu[men].Menu_label[label].select==0)
         {
          change_color(LCD_COLOR_WHITE,LCD_COLOR_BLACK);
@@ -3446,16 +3480,16 @@ void Change_menu_data(int sm,int men,int label,int key,unsigned char MsgNum)
            }
            else
            {
-             if(label!=Alarm_DEFAULT_menu)
-             {            
+             if(label!=Alarm_DEFAULT_menu && g_no_touched)
+             {                             
                  LCD_DrawfatBox(x-4,y-3,width-2,height-1,LCD_COLOR_RED);
              }
-             else 
+             else if(g_no_touched) 
                   LCD_DrawfatBox(x-4,y-3,263,35,LCD_COLOR_RED);
             } 
 
        }
-       
+    }
   switch(men)
   {
     case HR_Menu:
@@ -4599,7 +4633,7 @@ void Change_menu_data(int sm,int men,int label,int key,unsigned char MsgNum)
              Set_StateMachineStatus(ST_Menu);
              LCD_DrawFullRect_background(x-2,y-2,width+3,height+3);
              
-             LCD_DrawfatBox(x-4,y-3,width-2,height-1,LCD_COLOR_RED);
+             LCD_DrawfatBox(x-4,y-3,width-2,height-1,LCD_COLOR_WHITE);
              
             ONOFF_Alarm_Sound();
         }
@@ -4708,7 +4742,7 @@ void Change_menu_data(int sm,int men,int label,int key,unsigned char MsgNum)
              Set_StateMachineStatus(ST_Menu);
              LCD_DrawFullRect_background(x-2,y-2,width+3,height+3);
              
-             LCD_DrawfatBox(x-4,y-3,width-2,height-1,LCD_COLOR_RED);
+             LCD_DrawfatBox(x-4,y-3,width-2,height-1,LCD_COLOR_WHITE);
               ONOFF_Alarm_Sound();
         }
         show_bell(x,y,(Menu[men].Menu_label[label].data));
@@ -4743,7 +4777,7 @@ void Change_menu_data(int sm,int men,int label,int key,unsigned char MsgNum)
              Set_StateMachineStatus(ST_Menu);
              LCD_DrawFullRect_background(x-2,y-2,width+3,height+3);
              
-             LCD_DrawfatBox(x-4,y-3,width-2,height-1,LCD_COLOR_RED);
+              LCD_DrawfatBox(x-4,y-3,width-2,height-1,LCD_COLOR_WHITE);
               ONOFF_Alarm_Sound();  
         }
         show_bell(x,y,(Menu[men].Menu_label[label].data));
@@ -4811,7 +4845,7 @@ void Change_menu_data(int sm,int men,int label,int key,unsigned char MsgNum)
              Set_StateMachineStatus(ST_Menu);
              LCD_DrawFullRect_background(x-2,y-2,width+3,height+3);
              
-             LCD_DrawfatBox(x-4,y-3,width-2,height-1,LCD_COLOR_RED);
+             LCD_DrawfatBox(x-4,y-3,width-2,height-1,LCD_COLOR_WHITE);
               ONOFF_Alarm_Sound();  
          
         }
@@ -4892,7 +4926,7 @@ void Change_menu_data(int sm,int men,int label,int key,unsigned char MsgNum)
              Set_StateMachineStatus(ST_Menu);
              LCD_DrawFullRect_background(x-2,y-2,width+3,height+3);
              
-             LCD_DrawfatBox(x-4,y-3,width-2,height-1,LCD_COLOR_RED);
+             LCD_DrawfatBox(x-4,y-3,width-2,height-1,LCD_COLOR_WHITE);
               ONOFF_Alarm_Sound();  
            
         }
@@ -4984,7 +5018,7 @@ void Change_menu_data(int sm,int men,int label,int key,unsigned char MsgNum)
              Set_StateMachineStatus(ST_Menu);
              LCD_DrawFullRect_background(x-2,y-2,width+3,height+3);
              
-             LCD_DrawfatBox(x-4,y-3,width-2,height-1,LCD_COLOR_RED);
+             LCD_DrawfatBox(x-4,y-3,width-2,height-1,LCD_COLOR_WHITE);
               ONOFF_Alarm_Sound();  
    
         }
@@ -5039,7 +5073,7 @@ void Change_menu_data(int sm,int men,int label,int key,unsigned char MsgNum)
              Set_StateMachineStatus(ST_Menu);
              LCD_DrawFullRect_background(x-2,y-2,width+3,height+3);
              
-             LCD_DrawfatBox(x-4,y-3,width-2,height-1,LCD_COLOR_RED);
+             LCD_DrawfatBox(x-4,y-3,width-2,height-1,LCD_COLOR_WHITE);
               ONOFF_Alarm_Sound();  
            
         }
@@ -5140,7 +5174,7 @@ void Change_menu_data(int sm,int men,int label,int key,unsigned char MsgNum)
              Set_StateMachineStatus(ST_Menu);
              LCD_DrawFullRect_background(x-2,y-2,width+3,height+3);
              
-             LCD_DrawfatBox(x-4,y-3,width-2,height-1,LCD_COLOR_RED);
+             LCD_DrawfatBox(x-4,y-3,width-2,height-1,LCD_COLOR_WHITE);
               ONOFF_Alarm_Sound();  
                  
         }
@@ -5174,7 +5208,7 @@ void Change_menu_data(int sm,int men,int label,int key,unsigned char MsgNum)
              Set_StateMachineStatus(ST_Menu);
              LCD_DrawFullRect_background(x-2,y-2,width+3,height+3);
              
-             LCD_DrawfatBox(x-4,y-3,width-2,height-1,LCD_COLOR_RED);
+             LCD_DrawfatBox(x-4,y-3,width-2,height-1,LCD_COLOR_WHITE);
               ONOFF_Alarm_Sound();  
              
         }
@@ -5474,7 +5508,7 @@ void Change_menu_data(int sm,int men,int label,int key,unsigned char MsgNum)
              Set_StateMachineStatus(ST_Menu);
              LCD_DrawFullRect_background(x-2,y-2,width+3,height+3);
              
-             LCD_DrawfatBox(x-4,y-3,width-2,height-1,LCD_COLOR_RED);
+             LCD_DrawfatBox(x-4,y-3,width-2,height-1,LCD_COLOR_WHITE);
               ONOFF_Alarm_Sound();  
                 
         }
@@ -10371,6 +10405,8 @@ void Show_menu(int sm,int men,int key,unsigned char MsgNum)
     LCD_DrawFullRect_background(165-x_shift,82,629,363);
     Drow_label_menu(sm,men,key,MsgNum);
     
+
+    
     //Show_Model_menu(Get_menuLabel());
 }
 void Select_Model_menu(int men,int key)  //which option in menu
@@ -11846,6 +11882,7 @@ int Get_Trend_mode(void)
 
 wchar_t * Get_menu_word(int label) //
 {
+  
   switch(Menu[System_Menu].Menu_label[System_lang_menu].data)
   {
   case 0:

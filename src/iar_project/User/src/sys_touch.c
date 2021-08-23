@@ -109,6 +109,8 @@ int pulse_up;
 int pulse_down;
 
 
+bool g_no_touched = true;
+
 void init_touch_limit(int Model_Mode_Select){
 
  user_left = menu_box[Model_Mode_Select].User_Menu_posx;
@@ -305,8 +307,15 @@ int Touch_Select_Model_Label(int men, int pos_x, int pos_y){
       width = Menu[men].Menu_label[label_start+i].data_width;
       height= 36;
       
-      if( (x+5 < pos_x && pos_x < x+width+5) && (y < pos_y && pos_y < y+height)){
-        if((label_start+i) < Alarm_Start_menu  || (label_start+i) > Alarm_END_menu || (label_start+i) != User_ID_menu){
+      if( (x < pos_x && pos_x < x+width) && (y < pos_y && pos_y < y+height)){
+        if((label_start+i) == Alarm_PLUS_menu){         
+          return 2;  
+        }        
+        else if((label_start+i) == Alarm_MINUS_menu){
+          return 3;
+        }
+        
+        if((label_start+i) != User_ID_menu){
           Set_Select_Model_Label(label_start+i);
           Select_Model_Label_1 = label_start+i;
           Menu[men].Menu_label[label_start+i].select = 1; 

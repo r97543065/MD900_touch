@@ -128,6 +128,12 @@ wchar_t * Get_menu_Franc_word(int label)
 {
   switch(label)
   {
+  case Alarm_PLUS_menu:
+    return L"+";
+    break;
+  case Alarm_MINUS_menu:
+    return L"-";
+    break;     
   case HR_Start_menu:
     return L"H.R. Menu";
       break;

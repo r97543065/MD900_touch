@@ -227,8 +227,10 @@ enum//HR_menu
   Alarm_SETAGE_menu,
   Alarm_VOL_menu,
   Alarm_RETURN_menu,
+  Alarm_PLUS_menu,
+  Alarm_MINUS_menu,
   Alarm_END_menu,
-  
+
   /***Resp_W_Menu**/
   RespW_Start_menu,
   RespW_Speed_menu,
@@ -366,6 +368,7 @@ struct trend_parameter_range{
 
 /* Exported constants --------------------------------------------------------*/
 extern unsigned int System_volume, Alarm_volume;
+extern bool g_touch_trigger;
 /* Exported macro ------------------------------------------------------------*/ 
 /* Exported functions ------------------------------------------------------- */
 void Show_menu(int sm,int men,int key,unsigned char MsgNum);

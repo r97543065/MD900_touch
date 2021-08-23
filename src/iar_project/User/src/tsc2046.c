@@ -18,6 +18,11 @@ Description:			This is an STM32 device driver library for the TSC2046 resistive 
 #include "sys_spi.h"
 #include "sys_draw.h"
 
+#include <string.h>
+#include <stdlib.h>
+#include <string.h>
+#include <wchar.h>
+
 
 //Library Private variables
 //1. SPI handle
@@ -63,7 +68,7 @@ uint16_t TSC2046_SendCommand(uint8_t cmd)
         Sen_SPI1_data(cmd);
 
 	//Wait for response (3 ms)
-	delay(3);
+	delay(3);//3
         while(GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_4));
         spiBuf[1] = SPI1_Read_onebyte();
         spiBuf[2] = SPI1_Read_onebyte();
@@ -104,8 +109,10 @@ uint16_t watchVar1=0;
 uint16_t touch_cnt = 0;
 void TSC2046_Calibrate(void)
 {
+   wchar_t str_main[50];
 	
 	TS_TOUCH_RAW_Def myRawTouchDef;
+        /*
 	//Get Top-Left corner calibration coordinate
 	TSC2046_TL_point();
 	myTS_Calibrate.TL_X = 0;
@@ -127,10 +134,13 @@ void TSC2046_Calibrate(void)
                   if(touch_cnt > 500){
                     touch_cnt = 0;
                     for(uint8_t i=0; i<10; i++)
+                    //while(1)
                     {
                             myRawTouchDef = TSC2046_GetRawTouch();
                             myTS_Calibrate.TL_X += myRawTouchDef.x_touch;
                             myTS_Calibrate.TL_Y += myRawTouchDef.y_touch;
+                            swprintf(str_main,20,L"X %6d %4d",myRawTouchDef.x_touch, myRawTouchDef.y_touch);//202108
+                            show_str2(400,500,str_main);
                     }			
                     break;
                   }
@@ -174,12 +184,21 @@ void TSC2046_Calibrate(void)
 		}
 		delay(1000);
 	}
+        */
+        myRawTouchDef = TSC2046_GetRawTouch();
+        
 	
-	myTS_Calibrate.TL_X *=0.1;
-	myTS_Calibrate.TL_Y *=0.1;
+	//myTS_Calibrate.TL_X *=0.1;
+	//myTS_Calibrate.TL_Y *=0.1;
 	
-	myTS_Calibrate.BR_X *=0.1;
-	myTS_Calibrate.BR_Y *=0.1;
+	//myTS_Calibrate.BR_X *=0.1;
+	//myTS_Calibrate.BR_Y *=0.1;
+        
+        myTS_Calibrate.TL_X = 576;
+	myTS_Calibrate.TL_Y = 640;
+	
+	myTS_Calibrate.BR_X = 3648;
+	myTS_Calibrate.BR_Y = 3584;
 	
 	//1. Calculate X_Diff, Y_Diff
 	myTS_Calibrate.Scale_X = (myTS_Calibrate.Width + 0.0f)/(myTS_Calibrate.BR_X - myTS_Calibrate.TL_X + 0.0f);
@@ -206,8 +225,8 @@ TS_TOUCH_RAW_Def TSC2046_GetRawTouch(void)
 		case 1:
 			localRawTouch.x_touch = 4095 - TSC2046_getRaw_X();
 			localRawTouch.y_touch = TSC2046_getRaw_Y();
-			myTS_Calibrate.Width = 550;
-			myTS_Calibrate.Height = 470;
+			myTS_Calibrate.Width = 800;//550;
+			myTS_Calibrate.Height = 600;//470;
 			break;
 		
 		case 2:
@@ -225,10 +244,10 @@ TS_TOUCH_RAW_Def TSC2046_GetRawTouch(void)
 			break;
 		
 		case 4:
-			localRawTouch.x_touch = TSC2046_getRaw_Y();
-			localRawTouch.y_touch = TSC2046_getRaw_X();
-			myTS_Calibrate.Width = 320;
-			myTS_Calibrate.Height = 240;
+			localRawTouch.x_touch = TSC2046_getRaw_X();
+			localRawTouch.y_touch = TSC2046_getRaw_Y();
+			myTS_Calibrate.Width = 800;
+			myTS_Calibrate.Height = 600;
 			break;
 	}
 	
@@ -280,7 +299,7 @@ void TSC2046_BR_point(void)
 //7. Get orientation (from LCD driver)
 uint8_t TSC2046_getOrientation(void)
 {
-	return 1;//ILI9341_getRotation();
+	return 4;//ILI9341_getRotation();
 }
 
 //8. Get touch sccreen data
@@ -290,11 +309,11 @@ TS_TOUCH_DATA_Def TSC2046_GetTouchData(void)
 	TS_TOUCH_DATA_Def myTsData;
 	uint16_t temp16x=0, temp16y=0;
 	//Is screen pressed        
-        delay(1000);
+        delay(10);
         for(int i=0;i<5;i++){
             watchVar1 = TSC2046_getRaw_Z();
         }
-	if(watchVar1>1500)
+	if(watchVar1>1000)
 	{                
 		myTsData.isPressed = true;
 		//Read touch data
@@ -314,6 +333,9 @@ TS_TOUCH_DATA_Def TSC2046_GetTouchData(void)
 	myTsData.X = myTS_Calibrate.Scale_X*localRawTouch.x_touch + myTS_Calibrate.Bias_X;
 	//Y_Touch value
 	myTsData.Y = myTS_Calibrate.Scale_Y*localRawTouch.y_touch + myTS_Calibrate.Bias_Y;
-	
+        
+        myTsData.X = (int)((0.99*(float)myTsData.X) - (0.0092*(float)myTsData.Y));
+        myTsData.Y = (int)((0.0092*(float)myTsData.X) + (0.99*(float)myTsData.Y));
+        	
 	return myTsData;
 }

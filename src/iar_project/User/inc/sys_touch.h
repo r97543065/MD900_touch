@@ -10,7 +10,7 @@
 #include "sys_menu.h"  
  
 
-
+extern bool g_no_touched;
 void init_touch_limit(int Model_Mode_Select);
 void Touch_menu_data(int pos_x, int pos_y, int Stop);
 void Touch_change_menu_data(int sm,int men,int label,int pos_x, int pos_y,unsigned char MsgNum);

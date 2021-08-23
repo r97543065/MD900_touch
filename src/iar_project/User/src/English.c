@@ -292,6 +292,13 @@ wchar_t * Get_menu_English_word(int label)
   
   switch(label)
   {
+    
+  case Alarm_PLUS_menu:
+    return L"+";
+    break;
+  case Alarm_MINUS_menu:
+    return L"-";
+    break;    
   case HR_Start_menu:
     if(Get_Model_Mode() == MD_920)
       return L"Pulse Menu";

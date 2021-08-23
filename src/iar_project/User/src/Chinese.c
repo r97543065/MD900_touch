@@ -250,6 +250,13 @@ wchar_t * Get_menu_Chinese_word(int label)
 {
   switch(label)
   {
+  case Alarm_PLUS_menu:
+    return L"+";
+    break;
+  case Alarm_MINUS_menu:
+    return L"-";
+    break;     
+    
   case HR_Start_menu:
     return L"  心率選單";//2
       break;
